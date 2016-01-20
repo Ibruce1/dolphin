@@ -4,7 +4,6 @@
 
 #include <QHeaderView>
 
-#include "Core/ConfigManager.h"
 #include "DolphinQt2/GameList/GameList.h"
 #include "DolphinQt2/GameList/ListProxyModel.h"
 #include "DolphinQt2/GameList/TableProxyModel.h"
@@ -23,6 +22,7 @@ GameList::GameList(QWidget* parent): QStackedWidget(parent)
 	connect(m_table, &QTableView::doubleClicked, this, &GameList::GameSelected);
 	connect(m_list, &QListView::doubleClicked, this, &GameList::GameSelected);
 	connect(this, &GameList::DirectoryAdded, m_model, &GameListModel::DirectoryAdded);
+	connect(this, &GameList::DirectoryRemoved, m_model, &GameListModel::DirectoryRemoved);
 
 	addWidget(m_table);
 	addWidget(m_list);
@@ -40,11 +40,16 @@ void GameList::MakeTableView()
 	m_table->setSortingEnabled(true);
 	m_table->setCurrentIndex(QModelIndex());
 
-	// FIXME These icon image are overly wide and should be cut down to size,
-	// then we can remove these lines.
-	m_table->setColumnWidth(GameListModel::COL_PLATFORM, 52);
-	m_table->setColumnWidth(GameListModel::COL_COUNTRY, 38);
-	m_table->setColumnWidth(GameListModel::COL_RATING, 52);
+	// TODO load from config
+	m_table->setColumnHidden(GameListModel::COL_PLATFORM, false);
+	m_table->setColumnHidden(GameListModel::COL_ID, true);
+	m_table->setColumnHidden(GameListModel::COL_BANNER, false);
+	m_table->setColumnHidden(GameListModel::COL_TITLE, false);
+	m_table->setColumnHidden(GameListModel::COL_DESCRIPTION, true);
+	m_table->setColumnHidden(GameListModel::COL_MAKER, false);
+	m_table->setColumnHidden(GameListModel::COL_SIZE, false);
+	m_table->setColumnHidden(GameListModel::COL_COUNTRY, false);
+	m_table->setColumnHidden(GameListModel::COL_RATING, false);
 
 	QHeaderView* header = m_table->horizontalHeader();
 	header->setSectionResizeMode(GameListModel::COL_PLATFORM, QHeaderView::Fixed);

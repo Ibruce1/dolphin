@@ -46,7 +46,7 @@ IPC_HLE_PERIOD: For the Wiimote this is the call schedule:
 #include "Common/CommonTypes.h"
 #include "Common/Thread.h"
 #include "Common/Timer.h"
-
+#include "Common/Logging/Log.h"
 #include "Core/ConfigManager.h"
 #include "Core/Core.h"
 #include "Core/CoreTiming.h"
@@ -55,21 +55,17 @@ IPC_HLE_PERIOD: For the Wiimote this is the call schedule:
 #include "Core/HW/AudioInterface.h"
 #include "Core/HW/DSP.h"
 #include "Core/HW/EXI_DeviceIPL.h"
-#include "Core/HW/SI.h"
 #include "Core/HW/SystemTimers.h"
 #include "Core/HW/VideoInterface.h"
 #include "Core/IPC_HLE/WII_IPC_HLE.h"
 #include "Core/PowerPC/PowerPC.h"
-
 #include "VideoCommon/Fifo.h"
-#include "VideoCommon/VideoBackendBase.h"
 
 namespace SystemTimers
 {
 
 static int et_Dec;
 static int et_VI;
-static int et_SI;
 static int et_CP;
 static int et_AudioDMA;
 static int et_DSP;
@@ -127,16 +123,10 @@ static void VICallback(u64 userdata, int cyclesLate)
 	CoreTiming::ScheduleEvent(VideoInterface::GetTicksPerHalfLine() - cyclesLate, et_VI);
 }
 
-static void SICallback(u64 userdata, int cyclesLate)
-{
-	SerialInterface::UpdateDevices();
-	CoreTiming::ScheduleEvent(SerialInterface::GetTicksToNextSIPoll() - cyclesLate, et_SI);
-}
-
 static void CPCallback(u64 userdata, int cyclesLate)
 {
 	u64 now = CoreTiming::GetTicks();
-	int next = g_video_backend->Video_Sync((int)(now - s_last_sync_gpu_tick));
+	int next = Fifo::Update((int)(now - s_last_sync_gpu_tick));
 	s_last_sync_gpu_tick = now;
 
 	if (next > 0)
@@ -189,27 +179,27 @@ static void PatchEngineCallback(u64 userdata, int cyclesLate)
 static void ThrottleCallback(u64 last_time, int cyclesLate)
 {
 	// Allow the GPU thread to sleep. Setting this flag here limits the wakeups to 1 kHz.
-	GpuMaySleep();
+	Fifo::GpuMaySleep();
 
 	u32 time = Common::Timer::GetTimeMs();
 
 	int diff = (u32)last_time - time;
 	const SConfig& config = SConfig::GetInstance();
-	bool frame_limiter = config.m_Framelimit && !Core::GetIsFramelimiterTempDisabled();
+	bool frame_limiter = config.m_EmulationSpeed > 0.0f && !Core::GetIsThrottlerTempDisabled();
 	u32 next_event = GetTicksPerSecond()/1000;
-	if (config.m_Framelimit > 1)
+	if (frame_limiter)
 	{
-		next_event = next_event * (config.m_Framelimit - 1) * 5 / VideoInterface::TargetRefreshRate;
+		if (config.m_EmulationSpeed != 1.0f)
+			next_event = u32(next_event * config.m_EmulationSpeed);
+		const int max_fallback = config.iTimingVariance;
+		if (abs(diff) > max_fallback)
+		{
+			DEBUG_LOG(COMMON, "system too %s, %d ms skipped", diff<0 ? "slow" : "fast", abs(diff) - max_fallback);
+			last_time = time - max_fallback;
+		}
+		else if (diff > 0)
+			Common::SleepCurrentThread(diff);
 	}
-
-	const int max_fallback = config.iTimingVariance;
-	if (frame_limiter && abs(diff) > max_fallback)
-	{
-		DEBUG_LOG(COMMON, "system too %s, %d ms skipped", diff<0 ? "slow" : "fast", abs(diff) - max_fallback);
-		last_time = time - max_fallback;
-	}
-	else if (frame_limiter && diff > 0)
-		Common::SleepCurrentThread(diff);
 	CoreTiming::ScheduleEvent(next_event - cyclesLate, et_Throttle, last_time + 1);
 }
 
@@ -248,7 +238,6 @@ void Init()
 
 	et_Dec = CoreTiming::RegisterEvent("DecCallback", DecrementerCallback);
 	et_VI = CoreTiming::RegisterEvent("VICallback", VICallback);
-	et_SI = CoreTiming::RegisterEvent("SICallback", SICallback);
 	if (SConfig::GetInstance().bCPUThread && SConfig::GetInstance().bSyncGPU)
 		et_CP = CoreTiming::RegisterEvent("CPCallback", CPCallback);
 	et_DSP = CoreTiming::RegisterEvent("DSPCallback", DSPCallback);
@@ -259,7 +248,6 @@ void Init()
 
 	CoreTiming::ScheduleEvent(VideoInterface::GetTicksPerHalfLine(), et_VI);
 	CoreTiming::ScheduleEvent(0, et_DSP);
-	CoreTiming::ScheduleEvent(VideoInterface::GetTicksPerField(), et_SI);
 	CoreTiming::ScheduleEvent(s_audio_dma_period, et_AudioDMA);
 	CoreTiming::ScheduleEvent(0, et_Throttle, Common::Timer::GetTimeMs());
 	if (SConfig::GetInstance().bCPUThread && SConfig::GetInstance().bSyncGPU)

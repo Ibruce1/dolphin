@@ -11,7 +11,8 @@
 // Show the current FPS
 void cInterfaceEGL::Swap()
 {
-	eglSwapBuffers(egl_dpy, egl_surf);
+	if (egl_surf != EGL_NO_SURFACE)
+		eglSwapBuffers(egl_dpy, egl_surf);
 }
 void cInterfaceEGL::SwapInterval(int Interval)
 {
@@ -25,7 +26,7 @@ void* cInterfaceEGL::GetFuncAddress(const std::string& name)
 
 void cInterfaceEGL::DetectMode()
 {
-	if (s_opengl_mode != MODE_DETECT)
+	if (s_opengl_mode != GLInterfaceMode::MODE_DETECT)
 		return;
 
 	EGLint num_configs;
@@ -98,10 +99,11 @@ void cInterfaceEGL::DetectMode()
 // Call browser: Core.cpp:EmuThread() > main.cpp:Video_Initialize()
 bool cInterfaceEGL::Create(void *window_handle, bool core)
 {
-	const char *s;
 	EGLint egl_major, egl_minor;
 
 	egl_dpy = OpenDisplay();
+	m_host_window = (EGLNativeWindowType) window_handle;
+	m_has_handle = !!window_handle;
 
 	if (!egl_dpy)
 	{
@@ -116,7 +118,6 @@ bool cInterfaceEGL::Create(void *window_handle, bool core)
 	}
 
 	/* Detection code */
-	EGLConfig config;
 	EGLint num_configs;
 
 	DetectMode();
@@ -136,15 +137,15 @@ bool cInterfaceEGL::Create(void *window_handle, bool core)
 	};
 	switch (s_opengl_mode)
 	{
-		case MODE_OPENGL:
+		case GLInterfaceMode::MODE_OPENGL:
 			attribs[1] = EGL_OPENGL_BIT;
 			ctx_attribs[0] = EGL_NONE;
 		break;
-		case MODE_OPENGLES2:
+		case GLInterfaceMode::MODE_OPENGLES2:
 			attribs[1] = EGL_OPENGL_ES2_BIT;
 			ctx_attribs[1] = 2;
 		break;
-		case MODE_OPENGLES3:
+		case GLInterfaceMode::MODE_OPENGLES3:
 			attribs[1] = (1 << 6); /* EGL_OPENGL_ES3_BIT_KHR */
 			ctx_attribs[1] = 3;
 		break;
@@ -154,52 +155,95 @@ bool cInterfaceEGL::Create(void *window_handle, bool core)
 		break;
 	}
 
-	if (!eglChooseConfig( egl_dpy, attribs, &config, 1, &num_configs))
+	if (!eglChooseConfig( egl_dpy, attribs, &m_config, 1, &num_configs))
 	{
 		INFO_LOG(VIDEO, "Error: couldn't get an EGL visual config\n");
 		exit(1);
 	}
 
-	if (s_opengl_mode == MODE_OPENGL)
+	if (s_opengl_mode == GLInterfaceMode::MODE_OPENGL)
 		eglBindAPI(EGL_OPENGL_API);
 	else
 		eglBindAPI(EGL_OPENGL_ES_API);
 
-	EGLNativeWindowType host_window = (EGLNativeWindowType) window_handle;
-	EGLNativeWindowType native_window = InitializePlatform(host_window, config);
-
-	s = eglQueryString(egl_dpy, EGL_VERSION);
-	INFO_LOG(VIDEO, "EGL_VERSION = %s\n", s);
-
-	s = eglQueryString(egl_dpy, EGL_VENDOR);
-	INFO_LOG(VIDEO, "EGL_VENDOR = %s\n", s);
-
-	s = eglQueryString(egl_dpy, EGL_EXTENSIONS);
-	INFO_LOG(VIDEO, "EGL_EXTENSIONS = %s\n", s);
-
-	s = eglQueryString(egl_dpy, EGL_CLIENT_APIS);
-	INFO_LOG(VIDEO, "EGL_CLIENT_APIS = %s\n", s);
-
-	egl_ctx = eglCreateContext(egl_dpy, config, EGL_NO_CONTEXT, ctx_attribs );
+	egl_ctx = eglCreateContext(egl_dpy, m_config, EGL_NO_CONTEXT, ctx_attribs );
 	if (!egl_ctx)
 	{
 		INFO_LOG(VIDEO, "Error: eglCreateContext failed\n");
 		exit(1);
 	}
 
-	egl_surf = eglCreateWindowSurface(egl_dpy, config, native_window, nullptr);
-	if (!egl_surf)
+	std::string tmp;
+	std::istringstream buffer(eglQueryString(egl_dpy, EGL_EXTENSIONS));
+	while (buffer >> tmp)
 	{
-		INFO_LOG(VIDEO, "Error: eglCreateWindowSurface failed\n");
-		exit(1);
+		if (tmp == "EGL_KHR_surfaceless_context")
+		{
+			m_supports_surfaceless = true;
+			break;
+		}
 	}
 
+
+	CreateWindowSurface();
 	return true;
+}
+
+void cInterfaceEGL::CreateWindowSurface()
+{
+	if (m_has_handle)
+	{
+		EGLNativeWindowType native_window = InitializePlatform(m_host_window, m_config);
+		egl_surf = eglCreateWindowSurface(egl_dpy, m_config, native_window, nullptr);
+		if (!egl_surf)
+		{
+			INFO_LOG(VIDEO, "Error: eglCreateWindowSurface failed\n");
+			exit(1);
+		}
+	}
+	else if (!m_supports_surfaceless)
+	{
+		EGLint attrib_list[] =
+		{
+			EGL_NONE,
+		};
+		egl_surf = eglCreatePbufferSurface(egl_dpy, m_config, attrib_list);
+		if (!egl_surf)
+		{
+			INFO_LOG(VIDEO, "Error: eglCreatePbufferSurface failed");
+			exit(2);
+		}
+	}
+	else
+	{
+		egl_surf = EGL_NO_SURFACE;
+	}
+}
+
+void cInterfaceEGL::DestroyWindowSurface()
+{
+	if (egl_surf != EGL_NO_SURFACE && !eglDestroySurface(egl_dpy, egl_surf))
+		NOTICE_LOG(VIDEO, "Could not destroy window surface.");
+	egl_surf = EGL_NO_SURFACE;
 }
 
 bool cInterfaceEGL::MakeCurrent()
 {
 	return eglMakeCurrent(egl_dpy, egl_surf, egl_surf, egl_ctx);
+}
+
+void cInterfaceEGL::UpdateHandle(void* window_handle)
+{
+	m_host_window = (EGLNativeWindowType)window_handle;
+	m_has_handle = !!window_handle;
+}
+
+void cInterfaceEGL::UpdateSurface()
+{
+	ClearCurrent();
+	DestroyWindowSurface();
+	CreateWindowSurface();
+	MakeCurrent();
 }
 
 bool cInterfaceEGL::ClearCurrent()
@@ -218,8 +262,7 @@ void cInterfaceEGL::Shutdown()
 		eglMakeCurrent(egl_dpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 		if (!eglDestroyContext(egl_dpy, egl_ctx))
 			NOTICE_LOG(VIDEO, "Could not destroy drawing context.");
-		if (!eglDestroySurface(egl_dpy, egl_surf))
-			NOTICE_LOG(VIDEO, "Could not destroy window surface.");
+		DestroyWindowSurface();
 		if (!eglTerminate(egl_dpy))
 			NOTICE_LOG(VIDEO, "Could not destroy display connection.");
 		egl_ctx = nullptr;

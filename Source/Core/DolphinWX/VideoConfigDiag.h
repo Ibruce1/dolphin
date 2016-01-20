@@ -65,8 +65,6 @@ private:
 	T& m_setting;
 };
 
-typedef IntegerSetting<u32> U32Setting;
-
 class SettingChoice : public wxChoice
 {
 public:
@@ -84,7 +82,7 @@ public:
 protected:
 	void Event_Backend(wxCommandEvent &ev)
 	{
-		VideoBackend* new_backend = g_available_video_backends[ev.GetInt()];
+		VideoBackendBase* new_backend = g_available_video_backends[ev.GetInt()];
 		if (g_video_backend != new_backend)
 		{
 			bool do_switch = !Core::IsRunning();
@@ -283,7 +281,6 @@ protected:
 	std::map<wxWindow*, wxStaticText*> desc_texts; // maps dialog tabs (which are the parents of the setting controls) to their description text objects
 
 	VideoConfig &vconfig;
-	std::string ininame;
 
-	int m_msaa_modes;
+	size_t m_msaa_modes;
 };

@@ -4,13 +4,11 @@
 
 #pragma once
 
-#include <functional>
 #include <map>
+#include <memory>
 #include <unordered_map>
 
 #include "Common/CommonTypes.h"
-#include "Common/Thread.h"
-
 #include "VideoCommon/BPMemory.h"
 #include "VideoCommon/TextureDecoder.h"
 #include "VideoCommon/VideoCommon.h"
@@ -51,7 +49,7 @@ public:
 		u32 size_in_bytes;
 		u64 base_hash;
 		u64 hash; // for paletted textures, hash = base_hash ^ palette_hash
-		u32 format;
+		u32 format; // bits 0-3 will contain the in-memory format.
 		bool is_efb_copy;
 		bool is_custom_tex;
 		u32 memory_stride;
@@ -67,7 +65,6 @@ public:
 
 		void SetGeneralParameters(u32 _addr, u32 _size, u32 _format)
 		{
-			_dbg_assert_msg_(VIDEO, _format < 0x10, "You shouldn't use dolphin's \"Extra\" texture formats in a texture cache entry");
 			addr = _addr;
 			size_in_bytes = _size;
 			format = _format;
@@ -179,4 +176,4 @@ private:
 	} backup_config;
 };
 
-extern TextureCacheBase* g_texture_cache;
+extern std::unique_ptr<TextureCacheBase> g_texture_cache;

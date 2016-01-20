@@ -5,7 +5,7 @@
 #pragma once
 
 #include <QFileSystemWatcher>
-#include <QSet>
+#include <QMap>
 #include <QSharedPointer>
 #include <QString>
 #include <QStringList>
@@ -18,7 +18,9 @@ class GameLoader;
 
 // Watches directories and loads GameFiles in a separate thread.
 // To use this, just add directories using AddDirectory, and listen for the
-// GameLoaded and GameRemoved signals.
+// GameLoaded and GameRemoved signals. Ignore the PathChanged signal, it's
+// only there because the Qt people made fileChanged and directoryChanged
+// private.
 class GameTracker final : public QFileSystemWatcher
 {
 	Q_OBJECT
@@ -29,6 +31,7 @@ public:
 
 public slots:
 	void AddDirectory(QString dir);
+	void RemoveDirectory(QString dir);
 
 signals:
 	void GameLoaded(QSharedPointer<GameFile> game);
@@ -37,17 +40,16 @@ signals:
 	void PathChanged(QString path);
 
 private:
-	void UpdateDirectory(QString dir);
-	void UpdateFile(QString path);
-	void GenerateFilters();
+	void UpdateDirectory(const QString& dir);
+	void UpdateFile(const QString& path);
 
-	QSet<QString> m_tracked_files;
-	QStringList m_filters;
+	// game path -> number of directories that track it
+	QMap<QString, int> m_tracked_files;
 	QThread m_loader_thread;
 	GameLoader* m_loader;
 };
 
-class GameLoader : public QObject
+class GameLoader final : public QObject
 {
 	Q_OBJECT
 

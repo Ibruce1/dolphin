@@ -5,23 +5,24 @@
 #include <algorithm>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
+#include "Common/Assert.h"
 #include "Common/CommonFuncs.h"
+#include "Common/CommonTypes.h"
 #include "Core/HW/Memmap.h"
 
 #include "VideoCommon/BPMemory.h"
 #include "VideoCommon/IndexGenerator.h"
+#include "VideoCommon/NativeVertexFormat.h"
 #include "VideoCommon/Statistics.h"
 #include "VideoCommon/VertexLoaderBase.h"
 #include "VideoCommon/VertexLoaderManager.h"
 #include "VideoCommon/VertexManagerBase.h"
 #include "VideoCommon/VertexShaderManager.h"
-#include "VideoCommon/VideoCommon.h"
-
-
 
 namespace VertexLoaderManager
 {
@@ -124,6 +125,7 @@ void MarkAllDirty()
 static VertexLoaderBase* RefreshLoader(int vtx_attr_group, bool preprocess = false)
 {
 	CPState* state = preprocess ? &g_preprocess_cp_state : &g_main_cp_state;
+	state->last_id = vtx_attr_group;
 
 	VertexLoaderBase* loader;
 	if (state->attr_dirty[vtx_attr_group])
@@ -141,8 +143,8 @@ static VertexLoaderBase* RefreshLoader(int vtx_attr_group, bool preprocess = fal
 		}
 		else
 		{
-			loader = VertexLoaderBase::CreateVertexLoader(state->vtx_desc, state->vtx_attr[vtx_attr_group]);
-			s_vertex_loader_map[uid] = std::unique_ptr<VertexLoaderBase>(loader);
+			s_vertex_loader_map[uid] = VertexLoaderBase::CreateVertexLoader(state->vtx_desc, state->vtx_attr[vtx_attr_group]);
+			loader = s_vertex_loader_map[uid].get();
 			INCSTAT(stats.numVertexLoaders);
 		}
 		if (check_for_native_format)

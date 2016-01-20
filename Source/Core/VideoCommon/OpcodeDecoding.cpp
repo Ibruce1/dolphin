@@ -13,9 +13,8 @@
 // when they are called. The reason is that the vertex format affects the sizes of the vertices.
 
 #include "Common/CommonTypes.h"
-#include "Common/CPUDetect.h"
-#include "Core/Core.h"
-#include "Core/Host.h"
+#include "Common/MsgHandler.h"
+#include "Common/Logging/Log.h"
 #include "Core/FifoPlayer/FifoRecorder.h"
 #include "Core/HW/Memmap.h"
 #include "VideoCommon/BPMemory.h"
@@ -24,11 +23,9 @@
 #include "VideoCommon/DataReader.h"
 #include "VideoCommon/Fifo.h"
 #include "VideoCommon/OpcodeDecoding.h"
-#include "VideoCommon/PixelEngine.h"
 #include "VideoCommon/Statistics.h"
 #include "VideoCommon/VertexLoaderManager.h"
 #include "VideoCommon/VideoCommon.h"
-#include "VideoCommon/VideoConfig.h"
 #include "VideoCommon/XFMemory.h"
 
 
@@ -39,8 +36,8 @@ static u32 InterpretDisplayList(u32 address, u32 size)
 {
 	u8* startAddress;
 
-	if (g_use_deterministic_gpu_thread)
-		startAddress = (u8*)PopFifoAuxBuffer(size);
+	if (Fifo::g_use_deterministic_gpu_thread)
+		startAddress = (u8*)Fifo::PopFifoAuxBuffer(size);
 	else
 		startAddress = Memory::GetPointer(address);
 
@@ -66,7 +63,7 @@ static void InterpretDisplayListPreprocess(u32 address, u32 size)
 {
 	u8* startAddress = Memory::GetPointer(address);
 
-	PushFifoAuxBuffer(startAddress, size);
+	Fifo::PushFifoAuxBuffer(startAddress, size);
 
 	if (startAddress != nullptr)
 	{
@@ -278,7 +275,7 @@ u8* OpcodeDecoder_Run(DataReader src, u32* cycles, bool in_display_list)
 					(cmd_byte & GX_PRIMITIVE_MASK) >> GX_PRIMITIVE_SHIFT,
 					num_vertices,
 					src,
-					g_bSkipCurrentFrame,
+					Fifo::g_bSkipCurrentFrame,
 					is_preprocess);
 
 				if (bytes < 0)

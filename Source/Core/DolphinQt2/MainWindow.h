@@ -9,6 +9,7 @@
 #include <QString>
 #include <QToolBar>
 
+#include "DolphinQt2/MenuBar.h"
 #include "DolphinQt2/RenderWidget.h"
 #include "DolphinQt2/ToolBar.h"
 #include "DolphinQt2/GameList/GameList.h"
@@ -28,32 +29,32 @@ signals:
 
 private slots:
 	void Open();
-	void Browse();
 	void Play();
 	void Pause();
+
+	// May ask for confirmation. Returns whether or not it actually stopped.
 	bool Stop();
 	void ForceStop();
+
 	void FullScreen();
 	void ScreenShot();
 
+	void PathsConfig();
+
 private:
-	void MakeToolBar();
-	void MakeStack();
 	void MakeGameList();
+	void MakeMenuBar();
 	void MakeRenderWidget();
+	void MakeStack();
+	void MakeToolBar();
 
-	void MakeMenus();
-	void MakeFileMenu();
-	void MakeViewMenu();
-	void AddTableColumnsMenu(QMenu* view_menu);
-	void AddListTypePicker(QMenu* view_menu);
-
-	void StartGame(QString path);
+	void StartGame(const QString& path);
 	void ShowRenderWidget();
 	void HideRenderWidget();
 
 	QStackedWidget* m_stack;
 	ToolBar* m_tool_bar;
+	MenuBar* m_menu_bar;
 	GameList* m_game_list;
 	RenderWidget* m_render_widget;
 	bool m_rendering_to_main;

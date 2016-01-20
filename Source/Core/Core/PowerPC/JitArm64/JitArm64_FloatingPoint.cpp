@@ -3,9 +3,10 @@
 // Refer to the license.txt file included.
 
 #include "Common/Arm64Emitter.h"
-#include "Common/Common.h"
+#include "Common/CommonTypes.h"
 #include "Common/StringUtil.h"
 
+#include "Core/ConfigManager.h"
 #include "Core/Core.h"
 #include "Core/CoreTiming.h"
 #include "Core/PowerPC/PowerPC.h"
@@ -34,6 +35,7 @@ void JitArm64::faddsx(UGeckoInstruction inst)
 	INSTRUCTION_START
 	JITDISABLE(bJITFloatingPointOff);
 	FALLBACK_IF(inst.Rc);
+	FALLBACK_IF(SConfig::GetInstance().bFPRF && js.op->wantsFPRF);
 
 	u32 a = inst.FA, b = inst.FB, d = inst.FD;
 
@@ -42,6 +44,7 @@ void JitArm64::faddsx(UGeckoInstruction inst)
 	ARM64Reg VD = fpr.RW(d, REG_DUP);
 
 	m_float_emit.FADD(EncodeRegToDouble(VD), EncodeRegToDouble(VA), EncodeRegToDouble(VB));
+	fpr.FixSinglePrecision(d);
 }
 
 void JitArm64::faddx(UGeckoInstruction inst)
@@ -49,6 +52,7 @@ void JitArm64::faddx(UGeckoInstruction inst)
 	INSTRUCTION_START
 	JITDISABLE(bJITFloatingPointOff);
 	FALLBACK_IF(inst.Rc);
+	FALLBACK_IF(SConfig::GetInstance().bFPRF && js.op->wantsFPRF);
 
 	u32 a = inst.FA, b = inst.FB, d = inst.FD;
 
@@ -64,6 +68,7 @@ void JitArm64::fmaddsx(UGeckoInstruction inst)
 	INSTRUCTION_START
 	JITDISABLE(bJITFloatingPointOff);
 	FALLBACK_IF(inst.Rc);
+	FALLBACK_IF(SConfig::GetInstance().bFPRF && js.op->wantsFPRF);
 
 	u32 a = inst.FA, b = inst.FB, c = inst.FC, d = inst.FD;
 
@@ -75,6 +80,7 @@ void JitArm64::fmaddsx(UGeckoInstruction inst)
 
 	m_float_emit.FMUL(EncodeRegToDouble(V0), EncodeRegToDouble(VA), EncodeRegToDouble(VC));
 	m_float_emit.FADD(EncodeRegToDouble(VD), EncodeRegToDouble(V0), EncodeRegToDouble(VB));
+	fpr.FixSinglePrecision(d);
 
 	fpr.Unlock(V0);
 }
@@ -84,6 +90,7 @@ void JitArm64::fmaddx(UGeckoInstruction inst)
 	INSTRUCTION_START
 	JITDISABLE(bJITFloatingPointOff);
 	FALLBACK_IF(inst.Rc);
+	FALLBACK_IF(SConfig::GetInstance().bFPRF && js.op->wantsFPRF);
 
 	u32 a = inst.FA, b = inst.FB, c = inst.FC, d = inst.FD;
 
@@ -114,6 +121,7 @@ void JitArm64::fmsubsx(UGeckoInstruction inst)
 	INSTRUCTION_START
 	JITDISABLE(bJITFloatingPointOff);
 	FALLBACK_IF(inst.Rc);
+	FALLBACK_IF(SConfig::GetInstance().bFPRF && js.op->wantsFPRF);
 
 	u32 a = inst.FA, b = inst.FB, c = inst.FC, d = inst.FD;
 
@@ -125,6 +133,7 @@ void JitArm64::fmsubsx(UGeckoInstruction inst)
 
 	m_float_emit.FMUL(EncodeRegToDouble(V0), EncodeRegToDouble(VA), EncodeRegToDouble(VC));
 	m_float_emit.FSUB(EncodeRegToDouble(VD), EncodeRegToDouble(V0), EncodeRegToDouble(VB));
+	fpr.FixSinglePrecision(d);
 
 	fpr.Unlock(V0);
 }
@@ -134,6 +143,7 @@ void JitArm64::fmsubx(UGeckoInstruction inst)
 	INSTRUCTION_START
 	JITDISABLE(bJITFloatingPointOff);
 	FALLBACK_IF(inst.Rc);
+	FALLBACK_IF(SConfig::GetInstance().bFPRF && js.op->wantsFPRF);
 
 	u32 a = inst.FA, b = inst.FB, c = inst.FC, d = inst.FD;
 
@@ -150,6 +160,7 @@ void JitArm64::fmulsx(UGeckoInstruction inst)
 	INSTRUCTION_START
 	JITDISABLE(bJITFloatingPointOff);
 	FALLBACK_IF(inst.Rc);
+	FALLBACK_IF(SConfig::GetInstance().bFPRF && js.op->wantsFPRF);
 
 	u32 a = inst.FA, c = inst.FC, d = inst.FD;
 
@@ -158,6 +169,7 @@ void JitArm64::fmulsx(UGeckoInstruction inst)
 	ARM64Reg VD = fpr.RW(d, REG_DUP);
 
 	m_float_emit.FMUL(EncodeRegToDouble(VD), EncodeRegToDouble(VA), EncodeRegToDouble(VC));
+	fpr.FixSinglePrecision(d);
 }
 
 void JitArm64::fmulx(UGeckoInstruction inst)
@@ -165,6 +177,7 @@ void JitArm64::fmulx(UGeckoInstruction inst)
 	INSTRUCTION_START
 	JITDISABLE(bJITFloatingPointOff);
 	FALLBACK_IF(inst.Rc);
+	FALLBACK_IF(SConfig::GetInstance().bFPRF && js.op->wantsFPRF);
 
 	u32 a = inst.FA, c = inst.FC, d = inst.FD;
 
@@ -209,6 +222,7 @@ void JitArm64::fnmaddsx(UGeckoInstruction inst)
 	INSTRUCTION_START
 	JITDISABLE(bJITFloatingPointOff);
 	FALLBACK_IF(inst.Rc);
+	FALLBACK_IF(SConfig::GetInstance().bFPRF && js.op->wantsFPRF);
 
 	u32 a = inst.FA, b = inst.FB, c = inst.FC, d = inst.FD;
 
@@ -221,6 +235,7 @@ void JitArm64::fnmaddsx(UGeckoInstruction inst)
 	m_float_emit.FMUL(EncodeRegToDouble(V0), EncodeRegToDouble(VA), EncodeRegToDouble(VC));
 	m_float_emit.FADD(EncodeRegToDouble(VD), EncodeRegToDouble(V0), EncodeRegToDouble(VB));
 	m_float_emit.FNEG(EncodeRegToDouble(VD), EncodeRegToDouble(VD));
+	fpr.FixSinglePrecision(d);
 
 	fpr.Unlock(V0);
 }
@@ -230,6 +245,7 @@ void JitArm64::fnmaddx(UGeckoInstruction inst)
 	INSTRUCTION_START
 	JITDISABLE(bJITFloatingPointOff);
 	FALLBACK_IF(inst.Rc);
+	FALLBACK_IF(SConfig::GetInstance().bFPRF && js.op->wantsFPRF);
 
 	u32 a = inst.FA, b = inst.FB, c = inst.FC, d = inst.FD;
 
@@ -246,6 +262,7 @@ void JitArm64::fnmsubsx(UGeckoInstruction inst)
 	INSTRUCTION_START
 	JITDISABLE(bJITFloatingPointOff);
 	FALLBACK_IF(inst.Rc);
+	FALLBACK_IF(SConfig::GetInstance().bFPRF && js.op->wantsFPRF);
 
 	u32 a = inst.FA, b = inst.FB, c = inst.FC, d = inst.FD;
 
@@ -258,6 +275,7 @@ void JitArm64::fnmsubsx(UGeckoInstruction inst)
 	m_float_emit.FMUL(EncodeRegToDouble(V0), EncodeRegToDouble(VA), EncodeRegToDouble(VC));
 	m_float_emit.FSUB(EncodeRegToDouble(VD), EncodeRegToDouble(V0), EncodeRegToDouble(VB));
 	m_float_emit.FNEG(EncodeRegToDouble(VD), EncodeRegToDouble(VD));
+	fpr.FixSinglePrecision(d);
 
 	fpr.Unlock(V0);
 }
@@ -267,6 +285,7 @@ void JitArm64::fnmsubx(UGeckoInstruction inst)
 	INSTRUCTION_START
 	JITDISABLE(bJITFloatingPointOff);
 	FALLBACK_IF(inst.Rc);
+	FALLBACK_IF(SConfig::GetInstance().bFPRF && js.op->wantsFPRF);
 
 	u32 a = inst.FA, b = inst.FB, c = inst.FC, d = inst.FD;
 
@@ -300,6 +319,7 @@ void JitArm64::fsubsx(UGeckoInstruction inst)
 	INSTRUCTION_START
 	JITDISABLE(bJITFloatingPointOff);
 	FALLBACK_IF(inst.Rc);
+	FALLBACK_IF(SConfig::GetInstance().bFPRF && js.op->wantsFPRF);
 
 	u32 a = inst.FA, b = inst.FB, d = inst.FD;
 
@@ -308,6 +328,7 @@ void JitArm64::fsubsx(UGeckoInstruction inst)
 	ARM64Reg VD = fpr.RW(d, REG_DUP);
 
 	m_float_emit.FSUB(EncodeRegToDouble(VD), EncodeRegToDouble(VA), EncodeRegToDouble(VB));
+	fpr.FixSinglePrecision(d);
 }
 
 void JitArm64::fsubx(UGeckoInstruction inst)
@@ -315,6 +336,7 @@ void JitArm64::fsubx(UGeckoInstruction inst)
 	INSTRUCTION_START
 	JITDISABLE(bJITFloatingPointOff);
 	FALLBACK_IF(inst.Rc);
+	FALLBACK_IF(SConfig::GetInstance().bFPRF && js.op->wantsFPRF);
 
 	u32 a = inst.FA, b = inst.FB, d = inst.FD;
 
@@ -330,6 +352,7 @@ void JitArm64::frspx(UGeckoInstruction inst)
 	INSTRUCTION_START
 	JITDISABLE(bJITFloatingPointOff);
 	FALLBACK_IF(inst.Rc);
+	FALLBACK_IF(SConfig::GetInstance().bFPRF && js.op->wantsFPRF);
 
 	u32 b = inst.FB, d = inst.FD;
 
@@ -340,10 +363,11 @@ void JitArm64::frspx(UGeckoInstruction inst)
 	m_float_emit.FCVT(64, 32, EncodeRegToDouble(VD), EncodeRegToDouble(VD));
 }
 
-void JitArm64::fcmpx(UGeckoInstruction inst)
+void JitArm64::fcmpX(UGeckoInstruction inst)
 {
 	INSTRUCTION_START
 	JITDISABLE(bJITFloatingPointOff);
+	FALLBACK_IF(SConfig::GetInstance().bFPRF && js.op->wantsFPRF);
 
 	u32 a = inst.FA, b = inst.FB;
 	int crf = inst.CRFD;
@@ -354,26 +378,11 @@ void JitArm64::fcmpx(UGeckoInstruction inst)
 	ARM64Reg WA = gpr.GetReg();
 	ARM64Reg XA = EncodeRegTo64(WA);
 
-	FixupBranch pNaN1, pNaN2, pNaN3, pLesser, pGreater;
+	FixupBranch pNaN, pLesser, pGreater;
 	FixupBranch continue1, continue2, continue3;
 	ORR(XA, ZR, 32, 0, true);
 
-	if (a != b)
-	{
-		m_float_emit.FCMP(EncodeRegToDouble(VA), EncodeRegToDouble(VA));
-
-		// if (B != B) or (A != A), goto NaN's jump target
-		pNaN1 = B(CC_NEQ);
-
-		m_float_emit.FCMP(EncodeRegToDouble(VB), EncodeRegToDouble(VB));
-
-		pNaN2 = B(CC_NEQ);
-	}
-
 	m_float_emit.FCMP(EncodeRegToDouble(VA), EncodeRegToDouble(VB));
-
-	if (a == b)
-		pNaN3 = B(CC_NEQ);
 
 	if (a != b)
 	{
@@ -383,18 +392,13 @@ void JitArm64::fcmpx(UGeckoInstruction inst)
 		pLesser = B(CC_MI);
 	}
 
+	pNaN = B(CC_VS);
+
+	// A == B
 	ORR(XA, XA, 64 - 63, 0, true);
 	continue1 = B();
 
-	if (a != b)
-	{
-		SetJumpTarget(pNaN1);
-		SetJumpTarget(pNaN2);
-	}
-	else
-	{
-		SetJumpTarget(pNaN3);
-	}
+	SetJumpTarget(pNaN);
 
 	ORR(XA, XA, 64 - 61, 0, true);
 	ORR(XA, XA, 0, 0, true);
@@ -411,14 +415,11 @@ void JitArm64::fcmpx(UGeckoInstruction inst)
 		SetJumpTarget(pLesser);
 		ORR(XA, XA, 64 - 62, 1, true);
 		ORR(XA, XA, 0, 0, true);
-	}
 
-	SetJumpTarget(continue1);
-	if (a != b)
-	{
 		SetJumpTarget(continue2);
 		SetJumpTarget(continue3);
 	}
+	SetJumpTarget(continue1);
 
 	STR(INDEX_UNSIGNED, XA, X29, PPCSTATE_OFF(cr_val[0]) + (sizeof(PowerPC::ppcState.cr_val[0]) * crf));
 
@@ -453,6 +454,7 @@ void JitArm64::fdivx(UGeckoInstruction inst)
 	INSTRUCTION_START
 	JITDISABLE(bJITFloatingPointOff);
 	FALLBACK_IF(inst.Rc);
+	FALLBACK_IF(SConfig::GetInstance().bFPRF && js.op->wantsFPRF);
 
 	u32 a = inst.FA, b = inst.FB, d = inst.FD;
 
@@ -468,6 +470,7 @@ void JitArm64::fdivsx(UGeckoInstruction inst)
 	INSTRUCTION_START
 	JITDISABLE(bJITFloatingPointOff);
 	FALLBACK_IF(inst.Rc);
+	FALLBACK_IF(SConfig::GetInstance().bFPRF && js.op->wantsFPRF);
 
 	u32 a = inst.FA, b = inst.FB, d = inst.FD;
 
@@ -476,4 +479,5 @@ void JitArm64::fdivsx(UGeckoInstruction inst)
 	ARM64Reg VD = fpr.RW(d, REG_DUP);
 
 	m_float_emit.FDIV(EncodeRegToDouble(VD), EncodeRegToDouble(VA), EncodeRegToDouble(VB));
+	fpr.FixSinglePrecision(d);
 }

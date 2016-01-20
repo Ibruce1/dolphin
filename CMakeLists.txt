@@ -9,7 +9,6 @@ option(TRY_X11 "Enables X11 Support" ON)
 option(USE_SHARED_ENET "Use shared libenet if found rather than Dolphin's soon-to-compatibly-diverge version" OFF)
 option(USE_UPNP "Enables UPnP port mapping support" ON)
 option(DISABLE_WX "Disable wxWidgets (use Qt or CLI interface)" OFF)
-option(ENABLE_QT "Enable Qt (use the experimental Qt interface)" OFF)
 option(ENABLE_QT2 "Enable Qt2 (use the other experimental Qt interface)" OFF)
 option(ENABLE_PCH "Use PCH to speed up compilation" ON)
 option(ENABLE_LTO "Enables Link Time Optimization" OFF)
@@ -552,12 +551,17 @@ endif()
 if(UNIX)
 	message("Using named pipes as controller inputs")
 	add_definitions(-DUSE_PIPES=1)
+	message("Watching game memory for changes")
+	add_definitions(-DUSE_MEMORYWATCHER=1)
 endif()
 
 ########################################
 # Setup include directories (and make sure they are preferred over the Externals)
 #
 include_directories(Source/Core)
+if(ANDROID)
+	include_directories(Source/Android)
+endif()
 
 ########################################
 # Process externals and setup their include directories
@@ -752,7 +756,7 @@ else()
 	mark_as_advanced(ICONV_INCLUDE_DIR ICONV_LIBRARIES)
 endif()
 
-if(ENABLE_QT OR ENABLE_QT2)
+if(ENABLE_QT2)
 	find_package(Qt5Widgets REQUIRED)
 	message("Found Qt version ${Qt5Core_VERSION}, enabling the Qt backend")
 endif()
