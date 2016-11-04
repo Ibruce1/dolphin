@@ -20,11 +20,11 @@ import android.support.v17.leanback.widget.RowPresenter;
 import org.dolphinemu.dolphinemu.R;
 import org.dolphinemu.dolphinemu.activities.AddDirectoryActivity;
 import org.dolphinemu.dolphinemu.activities.EmulationActivity;
-import org.dolphinemu.dolphinemu.activities.SettingsActivity;
 import org.dolphinemu.dolphinemu.adapters.GameRowPresenter;
 import org.dolphinemu.dolphinemu.adapters.SettingsRowPresenter;
 import org.dolphinemu.dolphinemu.model.Game;
 import org.dolphinemu.dolphinemu.model.TvSettingsItem;
+import org.dolphinemu.dolphinemu.ui.settings.SettingsActivity;
 import org.dolphinemu.dolphinemu.utils.StartupHandler;
 import org.dolphinemu.dolphinemu.viewholders.TvGameViewHolder;
 
@@ -112,9 +112,9 @@ public final class TvMainActivity extends Activity implements MainView
 	}
 
 	@Override
-	public void launchSettingsActivity()
+	public void launchSettingsActivity(String menuTag)
 	{
-		SettingsActivity.launch(this);
+		SettingsActivity.launch(this, menuTag);
 	}
 
 	@Override
@@ -225,20 +225,32 @@ public final class TvMainActivity extends Activity implements MainView
 	{
 		ArrayObjectAdapter rowItems = new ArrayObjectAdapter(new SettingsRowPresenter());
 
-		rowItems.add(new TvSettingsItem(R.id.menu_refresh,
-				R.drawable.ic_refresh_tv,
-				R.string.grid_menu_refresh));
+		rowItems.add(new TvSettingsItem(R.id.menu_settings_core,
+				R.drawable.ic_settings_core_tv,
+				R.string.grid_menu_core_settings));
 
-		rowItems.add(new TvSettingsItem(R.id.menu_settings,
-				R.drawable.ic_settings_tv,
-				R.string.grid_menu_settings));
+		rowItems.add(new TvSettingsItem(R.id.menu_settings_video,
+				R.drawable.ic_settings_graphics_tv,
+				R.string.grid_menu_video_settings));
+
+		rowItems.add(new TvSettingsItem(R.id.menu_settings_gcpad,
+				R.drawable.ic_settings_gcpad,
+				R.string.grid_menu_gcpad_settings));
+
+		rowItems.add(new TvSettingsItem(R.id.menu_settings_wiimote,
+				R.drawable.ic_settings_wiimote,
+				R.string.grid_menu_wiimote_settings));
 
 		rowItems.add(new TvSettingsItem(R.id.button_add_directory,
 				R.drawable.ic_add_tv,
 				R.string.add_directory_title));
 
+		rowItems.add(new TvSettingsItem(R.id.menu_refresh,
+				R.drawable.ic_refresh_tv,
+				R.string.grid_menu_refresh));
+
 		// Create a header for this row.
-		HeaderItem header = new HeaderItem(R.string.settings, getString(R.string.settings));
+		HeaderItem header = new HeaderItem(R.string.preferences_settings, getString(R.string.preferences_settings));
 
 		return new ListRow(header, rowItems);
 	}

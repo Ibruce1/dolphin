@@ -181,7 +181,7 @@ public final class GameDatabase extends SQLiteOpenHelper
 							String fileExtension = filePath.substring(extensionStart);
 
 							// Check that the file has an extension we care about before trying to read out of it.
-							if (allowedExtensions.contains(fileExtension))
+							if (allowedExtensions.contains(fileExtension.toLowerCase()))
 							{
 								String name = NativeLibrary.GetTitle(filePath);
 
@@ -251,7 +251,7 @@ public final class GameDatabase extends SQLiteOpenHelper
 			}
 		}
 
-
+		fileCursor.close();
 		folderCursor.close();
 		database.close();
 	}

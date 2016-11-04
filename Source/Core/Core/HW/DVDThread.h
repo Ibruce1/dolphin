@@ -4,18 +4,23 @@
 
 #pragma once
 
-#include "Common/ChunkFile.h"
 #include "Common/CommonTypes.h"
+
+class PointerWrap;
+namespace DVDInterface
+{
+enum class ReplyType : u32;
+}
 
 namespace DVDThread
 {
-
 void Start();
 void Stop();
-void DoState(PointerWrap &p);
+void DoState(PointerWrap& p);
 
 void WaitUntilIdle();
-void StartRead(u64 dvd_offset, u32 output_address, u32 length, bool decrypt,
-               int callback_event_type, int ticks_until_completion);
-
+void StartRead(u64 dvd_offset, u32 length, bool decrypt, DVDInterface::ReplyType reply_type,
+               s64 ticks_until_completion);
+void StartReadToEmulatedRAM(u32 output_address, u64 dvd_offset, u32 length, bool decrypt,
+                            DVDInterface::ReplyType reply_type, s64 ticks_until_completion);
 }

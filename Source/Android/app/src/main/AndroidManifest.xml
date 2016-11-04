@@ -56,22 +56,16 @@
             android:label="@string/add_directory_title"/>
 
         <activity
-            android:name=".activities.SettingsActivity"
+            android:name=".ui.settings.SettingsActivity"
             android:theme="@style/DolphinSettingsGamecube"
-            android:label="@string/grid_menu_settings"/>
+            android:label="@string/preferences_settings"/>
 
         <activity
             android:name=".activities.EmulationActivity"
             android:theme="@style/DolphinEmulationGamecube"/>
 
-        <activity
-            android:name=".activities.OverlayConfigActivity"
-            android:theme="@style/DolphinSettingsGamecube"/>
-
 
         <service android:name=".services.AssetCopyService"/>
-
-        <service android:name=".services.SettingsSaveService"/>
 
         <provider
             android:name=".model.GameProvider"

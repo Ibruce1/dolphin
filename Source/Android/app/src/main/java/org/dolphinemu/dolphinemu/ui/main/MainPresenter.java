@@ -7,6 +7,7 @@ import org.dolphinemu.dolphinemu.DolphinApplication;
 import org.dolphinemu.dolphinemu.NativeLibrary;
 import org.dolphinemu.dolphinemu.R;
 import org.dolphinemu.dolphinemu.model.GameDatabase;
+import org.dolphinemu.dolphinemu.utils.SettingsFile;
 
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
@@ -41,11 +42,25 @@ public final class MainPresenter
 	{
 		switch (itemId)
 		{
-			case R.id.menu_settings:
-				mView.launchSettingsActivity();
+			case R.id.menu_settings_core:
+				mView.launchSettingsActivity(SettingsFile.FILE_NAME_DOLPHIN);
+				return true;
+
+			case R.id.menu_settings_video:
+				mView.launchSettingsActivity(SettingsFile.FILE_NAME_GFX);
+				return true;
+
+			case R.id.menu_settings_gcpad:
+				mView.launchSettingsActivity(SettingsFile.FILE_NAME_GCPAD);
+				return true;
+
+			case R.id.menu_settings_wiimote:
+				mView.launchSettingsActivity(SettingsFile.FILE_NAME_WIIMOTE);
 				return true;
 
 			case R.id.menu_refresh:
+				GameDatabase databaseHelper = DolphinApplication.databaseHelper;
+				databaseHelper.scanLibrary(databaseHelper.getWritableDatabase());
 				mView.refresh();
 				return true;
 

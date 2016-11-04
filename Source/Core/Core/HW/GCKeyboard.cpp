@@ -8,52 +8,44 @@
 #include "Common/CommonTypes.h"
 #include "Core/HW/GCKeyboard.h"
 #include "Core/HW/GCKeyboardEmu.h"
+#include "InputCommon/ControllerInterface/ControllerInterface.h"
 #include "InputCommon/InputConfig.h"
 #include "InputCommon/KeyboardStatus.h"
-#include "InputCommon/ControllerInterface/ControllerInterface.h"
 
 namespace Keyboard
 {
-
 static InputConfig s_config("GCKeyNew", _trans("Keyboard"), "GCKey");
 InputConfig* GetConfig()
 {
-	return &s_config;
+  return &s_config;
 }
 
 void Shutdown()
 {
-	s_config.ClearControllers();
-
-	g_controller_interface.Shutdown();
+  s_config.ClearControllers();
 }
 
-void Initialize(void* const hwnd)
+void Initialize()
 {
-	if (s_config.ControllersNeedToBeCreated())
-	{
-		for (unsigned int i = 0; i < 4; ++i)
-			s_config.CreateController<GCKeyboard>(i);
-	}
+  if (s_config.ControllersNeedToBeCreated())
+  {
+    for (unsigned int i = 0; i < 4; ++i)
+      s_config.CreateController<GCKeyboard>(i);
+  }
 
-	g_controller_interface.Initialize(hwnd);
+  g_controller_interface.RegisterHotplugCallback(LoadConfig);
 
-	// Load the saved controller config
-	s_config.LoadConfig(true);
+  // Load the saved controller config
+  s_config.LoadConfig(true);
 }
 
 void LoadConfig()
 {
-	s_config.LoadConfig(true);
+  s_config.LoadConfig(true);
 }
 
-void GetStatus(u8 port, KeyboardStatus* keyboard_status)
+KeyboardStatus GetStatus(int port)
 {
-	memset(keyboard_status, 0, sizeof(*keyboard_status));
-	keyboard_status->err = PAD_ERR_NONE;
-
-	// Get input
-	static_cast<GCKeyboard*>(s_config.GetController(port))->GetInput(keyboard_status);
+  return static_cast<GCKeyboard*>(s_config.GetController(port))->GetInput();
 }
-
 }

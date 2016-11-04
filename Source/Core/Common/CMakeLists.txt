@@ -1,4 +1,5 @@
-set(SRCS BreakPoints.cpp
+set(SRCS Analytics.cpp
+         BreakPoints.cpp
          CDUtils.cpp
          ColorUtil.cpp
          ENetUtil.cpp
@@ -28,8 +29,8 @@ set(SRCS BreakPoints.cpp
          TraversalClient.cpp
          Version.cpp
          x64ABI.cpp
-         x64Analyzer.cpp
          x64Emitter.cpp
+         MD5.cpp
          Crypto/bn.cpp
          Crypto/ec.cpp
          Logging/LogManager.cpp)
@@ -42,7 +43,7 @@ else()
 	         Logging/ConsoleListenerNix.cpp)
 endif()
 
-set(LIBS enet)
+list(APPEND LIBS enet ${CURL_LIBRARIES})
 if(_M_ARM_64)
 	set(SRCS ${SRCS}
 	         Arm64Emitter.cpp
@@ -60,13 +61,10 @@ else()
 	endif()
 endif()
 
-set(LIBS "${CMAKE_THREAD_LIBS_INIT}" ${VTUNE_LIBRARIES})
-if(NOT APPLE AND NOT ANDROID)
-	set(LIBS ${LIBS} rt)
-endif()
+list(APPEND LIBS "${CMAKE_THREAD_LIBS_INIT}" ${VTUNE_LIBRARIES})
 
 # OpenGL Interface
-set(SRCS ${SRCS} 
+set(SRCS ${SRCS}
 	GL/GLUtil.cpp
 	GL/GLExtensions/GLExtensions.cpp
 	GL/GLInterface/GLInterface.cpp)
@@ -84,7 +82,7 @@ endif()
 if(WIN32)
     set(SRCS ${SRCS} GL/GLInterface/WGL.cpp)
 elseif(APPLE)
-    set(SRCS ${SRCS} GL/GLInterface/AGL.cpp)
+    set(SRCS ${SRCS} GL/GLInterface/AGL.mm)
 elseif(USE_X11)
     if (NOT USE_EGL)
         set(SRCS ${SRCS} GL/GLInterface/GLX.cpp)
@@ -96,7 +94,7 @@ elseif(USE_X11)
     set(LIBS ${LIBS} ${XRANDR_LIBRARIES})
 endif()
 
-if(NOT CMAKE_SYSTEM_NAME MATCHES FreeBSD)
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 	set(LIBS ${LIBS} dl)
 endif()
 

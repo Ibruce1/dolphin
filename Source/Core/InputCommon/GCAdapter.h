@@ -14,23 +14,21 @@ namespace GCAdapter
 {
 enum ControllerTypes
 {
-	CONTROLLER_NONE = 0,
-	CONTROLLER_WIRED = 1,
-	CONTROLLER_WIRELESS = 2
+  CONTROLLER_NONE = 0,
+  CONTROLLER_WIRED = 1,
+  CONTROLLER_WIRELESS = 2
 };
 void Init();
-void Reset();
 void ResetRumble();
-void Setup();
 void Shutdown();
 void SetAdapterCallback(std::function<void(void)> func);
 void StartScanThread();
 void StopScanThread();
-void Input(int chan, GCPadStatus* pad);
+GCPadStatus Input(int chan);
 void Output(int chan, u8 rumble_command);
 bool IsDetected();
 bool IsDriverDetected();
 bool DeviceConnected(int chan);
 bool UseAdapter();
 
-} // end of namespace GCAdapter
+}  // end of namespace GCAdapter

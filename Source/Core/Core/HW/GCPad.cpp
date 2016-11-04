@@ -13,57 +13,48 @@
 
 namespace Pad
 {
-
 static InputConfig s_config("GCPadNew", _trans("Pad"), "GCPad");
 InputConfig* GetConfig()
 {
-	return &s_config;
+  return &s_config;
 }
 
 void Shutdown()
 {
-	s_config.ClearControllers();
-
-	g_controller_interface.Shutdown();
+  s_config.ClearControllers();
 }
 
-void Initialize(void* const hwnd)
+void Initialize()
 {
-	if (s_config.ControllersNeedToBeCreated())
-	{
-		for (unsigned int i = 0; i < 4; ++i)
-			s_config.CreateController<GCPad>(i);
-	}
+  if (s_config.ControllersNeedToBeCreated())
+  {
+    for (unsigned int i = 0; i < 4; ++i)
+      s_config.CreateController<GCPad>(i);
+  }
 
-	g_controller_interface.Initialize(hwnd);
+  g_controller_interface.RegisterHotplugCallback(LoadConfig);
 
-	// Load the saved controller config
-	s_config.LoadConfig(true);
+  // Load the saved controller config
+  s_config.LoadConfig(true);
 }
 
 void LoadConfig()
 {
-	s_config.LoadConfig(true);
+  s_config.LoadConfig(true);
 }
 
-
-void GetStatus(u8 pad_num, GCPadStatus* pad_status)
+GCPadStatus GetStatus(int pad_num)
 {
-	memset(pad_status, 0, sizeof(*pad_status));
-	pad_status->err = PAD_ERR_NONE;
-
-	// Get input
-	static_cast<GCPad*>(s_config.GetController(pad_num))->GetInput(pad_status);
+  return static_cast<GCPad*>(s_config.GetController(pad_num))->GetInput();
 }
 
-void Rumble(const u8 pad_num, const ControlState strength)
+void Rumble(const int pad_num, const ControlState strength)
 {
-	static_cast<GCPad*>(s_config.GetController(pad_num))->SetOutput(strength);
+  static_cast<GCPad*>(s_config.GetController(pad_num))->SetOutput(strength);
 }
 
-bool GetMicButton(const u8 pad_num)
+bool GetMicButton(const int pad_num)
 {
-	return static_cast<GCPad*>(s_config.GetController(pad_num))->GetMicButton();
+  return static_cast<GCPad*>(s_config.GetController(pad_num))->GetMicButton();
 }
-
 }

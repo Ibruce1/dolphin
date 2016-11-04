@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <atomic>
 #include <cstddef>
 #include "Common/CommonTypes.h"
 
@@ -12,32 +11,26 @@ class PointerWrap;
 
 namespace Fifo
 {
-
-extern bool g_bSkipCurrentFrame;
-
-// This could be in SConfig, but it depends on multiple settings
-// and can change at runtime.
-extern bool g_use_deterministic_gpu_thread;
-extern std::atomic<u8*> g_video_buffer_write_ptr_xthread;
-
 void Init();
 void Shutdown();
-void DoState(PointerWrap &f);
+void Prepare();  // Must be called from the CPU thread.
+void DoState(PointerWrap& f);
 void PauseAndLock(bool doLock, bool unpauseOnUnlock);
 void UpdateWantDeterminism(bool want);
+bool UseDeterministicGPUThread();
 
 // Used for diagnostics.
-enum SyncGPUReason
+enum class SyncGPUReason
 {
-	SYNC_GPU_OTHER,
-	SYNC_GPU_WRAPAROUND,
-	SYNC_GPU_EFB_POKE,
-	SYNC_GPU_PERFQUERY,
-	SYNC_GPU_BBOX,
-	SYNC_GPU_SWAP,
-	SYNC_GPU_AUX_SPACE,
+  Other,
+  Wraparound,
+  EFBPoke,
+  PerfQuery,
+  BBox,
+  Swap,
+  AuxSpace,
 };
-// In g_use_deterministic_gpu_thread mode, waits for the GPU to be done with pending work.
+// In deterministic GPU thread mode this waits for the GPU to be done with pending work.
 void SyncGPU(SyncGPUReason reason, bool may_move_read_ptr = true);
 
 void PushFifoAuxBuffer(void* ptr, size_t size);
@@ -51,7 +44,5 @@ void ExitGpuLoop();
 void EmulatorState(bool running);
 bool AtBreakpoint();
 void ResetVideoBuffer();
-void SetRendering(bool bEnabled);
-int Update(int ticks);
 
-};
+}  // namespace Fifo

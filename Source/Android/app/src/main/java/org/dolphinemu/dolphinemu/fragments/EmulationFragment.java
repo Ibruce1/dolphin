@@ -10,13 +10,13 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 
 import org.dolphinemu.dolphinemu.BuildConfig;
 import org.dolphinemu.dolphinemu.NativeLibrary;
 import org.dolphinemu.dolphinemu.R;
 import org.dolphinemu.dolphinemu.overlay.InputOverlay;
 import org.dolphinemu.dolphinemu.utils.Log;
-
 
 public final class EmulationFragment extends Fragment implements SurfaceHolder.Callback
 {
@@ -26,18 +26,14 @@ public final class EmulationFragment extends Fragment implements SurfaceHolder.C
 
 	private SharedPreferences mPreferences;
 
-	private SurfaceView mSurfaceView;
 	private Surface mSurface;
 
 	private InputOverlay mInputOverlay;
 
 	private Thread mEmulationThread;
 
-	private String mPath;
-
 	private boolean mEmulationStarted;
 	private boolean mEmulationRunning;
-
 
 	public static EmulationFragment newInstance(String path)
 	{
@@ -70,15 +66,15 @@ public final class EmulationFragment extends Fragment implements SurfaceHolder.C
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
 	{
-		mPath = getArguments().getString(ARGUMENT_GAME_PATH);
-		NativeLibrary.SetFilename(mPath);
+		String path = getArguments().getString(ARGUMENT_GAME_PATH);
+		NativeLibrary.SetFilename(path);
 
 		View contents = inflater.inflate(R.layout.fragment_emulation, container, false);
 
-		mSurfaceView = (SurfaceView) contents.findViewById(R.id.surface_emulation);
+		SurfaceView surfaceView = (SurfaceView) contents.findViewById(R.id.surface_emulation);
 		mInputOverlay = (InputOverlay) contents.findViewById(R.id.surface_input_overlay);
 
-		mSurfaceView.getHolder().addCallback(this);
+		surfaceView.getHolder().addCallback(this);
 
 		// If the input overlay was previously disabled, then don't show it.
 		if (mInputOverlay != null)
@@ -88,7 +84,6 @@ public final class EmulationFragment extends Fragment implements SurfaceHolder.C
 				mInputOverlay.setVisibility(View.GONE);
 			}
 		}
-
 
 		if (savedInstanceState == null)
 		{
@@ -102,6 +97,23 @@ public final class EmulationFragment extends Fragment implements SurfaceHolder.C
 		}
 
 		return contents;
+	}
+
+	@Override
+	public void onViewCreated(View view, Bundle savedInstanceState)
+	{
+		Button doneButton = (Button) view.findViewById(R.id.done_control_config);
+		if (doneButton != null)
+		{
+			doneButton.setOnClickListener(new View.OnClickListener()
+			{
+				@Override
+				public void onClick(View v)
+				{
+					stopConfiguringControls();
+				}
+			});
+		}
 	}
 
 	@Override
@@ -146,6 +158,11 @@ public final class EmulationFragment extends Fragment implements SurfaceHolder.C
 		}
 
 		editor.apply();
+	}
+
+	public void refreshInputOverlay()
+	{
+		mInputOverlay.refreshControls();
 	}
 
 	@Override
@@ -227,4 +244,21 @@ public final class EmulationFragment extends Fragment implements SurfaceHolder.C
 			NativeLibrary.Run();
 		}
 	};
+
+	public void startConfiguringControls()
+	{
+		getView().findViewById(R.id.done_control_config).setVisibility(View.VISIBLE);
+		mInputOverlay.setIsInEditMode(true);
+	}
+
+	public void stopConfiguringControls()
+	{
+		getView().findViewById(R.id.done_control_config).setVisibility(View.GONE);
+		mInputOverlay.setIsInEditMode(false);
+	}
+
+	public boolean isConfiguringControls()
+	{
+		return mInputOverlay.isInEditMode();
+	}
 }

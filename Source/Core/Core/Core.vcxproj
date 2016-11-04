@@ -36,6 +36,7 @@
   <PropertyGroup Label="UserMacros" />
   <ItemGroup>
     <ClCompile Include="ActionReplay.cpp" />
+    <ClCompile Include="Analytics.cpp" />
     <ClCompile Include="ARDecrypt.cpp" />
     <ClCompile Include="BootManager.cpp" />
     <ClCompile Include="Boot\Boot.cpp" />
@@ -121,7 +122,6 @@
     <ClCompile Include="HW\EXI_Device.cpp" />
     <ClCompile Include="HW\EXI_DeviceAD16.cpp" />
     <ClCompile Include="HW\EXI_DeviceAGP.cpp" />
-    <ClCompile Include="HW\EXI_DeviceAMBaseboard.cpp" />
     <ClCompile Include="HW\EXI_DeviceEthernet.cpp" />
     <ClCompile Include="HW\EXI_DeviceGecko.cpp" />
     <ClCompile Include="HW\EXI_DeviceIPL.cpp" />
@@ -142,7 +142,6 @@
     <ClCompile Include="HW\ProcessorInterface.cpp" />
     <ClCompile Include="HW\SI.cpp" />
     <ClCompile Include="HW\SI_Device.cpp" />
-    <ClCompile Include="HW\SI_DeviceAMBaseboard.cpp" />
     <ClCompile Include="HW\SI_DeviceDanceMat.cpp" />
     <ClCompile Include="HW\SI_DeviceGBA.cpp" />
     <ClCompile Include="HW\SI_DeviceGCAdapter.cpp" />
@@ -184,9 +183,16 @@
     </ClCompile>
     <ClCompile Include="IPC_HLE\WII_IPC_HLE_Device_net.cpp" />
     <ClCompile Include="IPC_HLE\WII_IPC_HLE_Device_net_ssl.cpp" />
+    <ClCompile Include="IPC_HLE\WII_IPC_HLE_Device_stm.cpp" />
     <ClCompile Include="IPC_HLE\WII_IPC_HLE_Device_sdio_slot0.cpp" />
-    <ClCompile Include="IPC_HLE\WII_IPC_HLE_Device_usb.cpp" />
+    <ClCompile Include="IPC_HLE\WII_IPC_HLE_Device_usb_bt_base.cpp" />
+    <ClCompile Include="IPC_HLE\WII_IPC_HLE_Device_usb_bt_emu.cpp" />
+    <ClCompile Include="IPC_HLE\WII_IPC_HLE_Device_usb_bt_real.cpp">
+      <DisableSpecificWarnings>4200;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <ClCompile Include="IPC_HLE\WII_IPC_HLE_Device_usb_bt_stub.cpp" />
     <ClCompile Include="IPC_HLE\WII_IPC_HLE_Device_usb_kbd.cpp" />
+    <ClCompile Include="IPC_HLE\WII_IPC_HLE_Device_usb_ven.cpp" />
     <ClCompile Include="IPC_HLE\WII_IPC_HLE_WiiMote.cpp" />
     <ClCompile Include="IPC_HLE\WII_Socket.cpp" />
     <ClCompile Include="MemTools.cpp" />
@@ -248,6 +254,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ActionReplay.h" />
+    <ClInclude Include="Analytics.h" />
     <ClInclude Include="ARDecrypt.h" />
     <ClInclude Include="BootManager.h" />
     <ClInclude Include="Boot\Boot.h" />
@@ -326,7 +333,6 @@
     <ClInclude Include="HW\EXI_Device.h" />
     <ClInclude Include="HW\EXI_DeviceAD16.h" />
     <ClInclude Include="HW\EXI_DeviceAGP.h" />
-    <ClInclude Include="HW\EXI_DeviceAMBaseboard.h" />
     <ClInclude Include="HW\EXI_DeviceEthernet.h" />
     <ClInclude Include="HW\EXI_DeviceGecko.h" />
     <ClInclude Include="HW\EXI_DeviceIPL.h" />
@@ -348,7 +354,6 @@
     <ClInclude Include="HW\ProcessorInterface.h" />
     <ClInclude Include="HW\SI.h" />
     <ClInclude Include="HW\SI_Device.h" />
-    <ClInclude Include="HW\SI_DeviceAMBaseboard.h" />
     <ClInclude Include="HW\SI_DeviceDanceMat.h" />
     <ClInclude Include="HW\SI_DeviceGBA.h" />
     <ClInclude Include="HW\SI_DeviceGCAdapter.h" />
@@ -387,10 +392,14 @@
     <ClInclude Include="IPC_HLE\WII_IPC_HLE_Device_hid.h" />
     <ClInclude Include="IPC_HLE\WII_IPC_HLE_Device_net.h" />
     <ClInclude Include="IPC_HLE\WII_IPC_HLE_Device_net_ssl.h" />
-    <ClInclude Include="IPC_HLE\WII_IPC_HLE_Device_sdio_slot0.h" />
     <ClInclude Include="IPC_HLE\WII_IPC_HLE_Device_stm.h" />
-    <ClInclude Include="IPC_HLE\WII_IPC_HLE_Device_usb.h" />
+    <ClInclude Include="IPC_HLE\WII_IPC_HLE_Device_sdio_slot0.h" />
+    <ClInclude Include="IPC_HLE\WII_IPC_HLE_Device_usb_bt_base.h" />
+    <ClInclude Include="IPC_HLE\WII_IPC_HLE_Device_usb_bt_emu.h" />
+    <ClInclude Include="IPC_HLE\WII_IPC_HLE_Device_usb_bt_real.h" />
+    <ClInclude Include="IPC_HLE\WII_IPC_HLE_Device_usb_bt_stub.h" />
     <ClInclude Include="IPC_HLE\WII_IPC_HLE_Device_usb_kbd.h" />
+    <ClInclude Include="IPC_HLE\WII_IPC_HLE_Device_usb_ven.h" />
     <ClInclude Include="IPC_HLE\WII_IPC_HLE_WiiMote.h" />
     <ClInclude Include="IPC_HLE\WII_Socket.h" />
     <ClInclude Include="MachineContext.h" />

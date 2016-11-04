@@ -1,4 +1,5 @@
 set(SRCS	ActionReplay.cpp
+			Analytics.cpp
 			ARDecrypt.cpp
 			BootManager.cpp
 			ConfigManager.cpp
@@ -89,7 +90,6 @@ set(SRCS	ActionReplay.cpp
 			HW/EXI_Device.cpp
 			HW/EXI_DeviceAD16.cpp
 			HW/EXI_DeviceAGP.cpp
-			HW/EXI_DeviceAMBaseboard.cpp
 			HW/EXI_DeviceEthernet.cpp
 			HW/EXI_DeviceGecko.cpp
 			HW/EXI_DeviceIPL.cpp
@@ -109,7 +109,6 @@ set(SRCS	ActionReplay.cpp
 			HW/MMIO.cpp
 			HW/ProcessorInterface.cpp
 			HW/SI.cpp
-			HW/SI_DeviceAMBaseboard.cpp
 			HW/SI_Device.cpp
 			HW/SI_DeviceDanceMat.cpp
 			HW/SI_DeviceGBA.cpp
@@ -144,9 +143,13 @@ set(SRCS	ActionReplay.cpp
 			IPC_HLE/WII_Socket.cpp
 			IPC_HLE/WII_IPC_HLE_Device_net.cpp
 			IPC_HLE/WII_IPC_HLE_Device_net_ssl.cpp
+			IPC_HLE/WII_IPC_HLE_Device_stm.cpp
 			IPC_HLE/WII_IPC_HLE_Device_sdio_slot0.cpp
-			IPC_HLE/WII_IPC_HLE_Device_usb.cpp
+			IPC_HLE/WII_IPC_HLE_Device_usb_bt_base.cpp
+			IPC_HLE/WII_IPC_HLE_Device_usb_bt_emu.cpp
+			IPC_HLE/WII_IPC_HLE_Device_usb_bt_stub.cpp
 			IPC_HLE/WII_IPC_HLE_Device_usb_kbd.cpp
+			IPC_HLE/WII_IPC_HLE_Device_usb_ven.cpp
 			IPC_HLE/WII_IPC_HLE_WiiMote.cpp
 			IPC_HLE/WiiMote_HID_Attr.cpp
 			PowerPC/MMU.cpp
@@ -232,6 +235,7 @@ set(LIBS
 	${LZO}
 	sfml-network
 	sfml-system
+	videonull
 	videoogl
 	videosoftware
 	z
@@ -240,8 +244,13 @@ set(LIBS
 if(LIBUSB_FOUND)
 	# Using shared LibUSB
 	set(LIBS	${LIBS}	${LIBUSB_LIBRARIES})
-	set(SRCS	${SRCS}	IPC_HLE/WII_IPC_HLE_Device_hid.cpp)
+	set(SRCS	${SRCS}	IPC_HLE/WII_IPC_HLE_Device_hid.cpp
+	        	       	IPC_HLE/WII_IPC_HLE_Device_usb_bt_real.cpp)
 endif(LIBUSB_FOUND)
+
+if(NOT APPLE)
+	set(LIBS ${LIBS} videovulkan)
+endif()
 
 set(LIBS ${LIBS} ${MBEDTLS_LIBRARIES})
 
@@ -254,15 +263,18 @@ elseif(APPLE)
 elseif(UNIX)
 	set(SRCS ${SRCS} HW/BBA-TAP/TAP_Unix.cpp)
 	if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND BLUEZ_FOUND)
-		set(SRCS ${SRCS} HW/WiimoteReal/IONix.cpp)
+		set(SRCS ${SRCS} HW/WiimoteReal/IOLinux.cpp)
 		set(LIBS ${LIBS} bluetooth)
-	else()
-		set(SRCS ${SRCS} HW/WiimoteReal/IODummy.cpp)
+	elseif(ANDROID)
+		set(SRCS ${SRCS} HW/WiimoteReal/IOAndroid.cpp)
 	endif()
 endif()
+if(HIDAPI_FOUND)
+	set(SRCS ${SRCS} HW/WiimoteReal/IOhidapi.cpp)
+endif(HIDAPI_FOUND)
 
 if(PORTAUDIO_FOUND)
-	set(LIBS ${LIBS} portaudio)
+	set(LIBS ${LIBS} ${PORTAUDIO_LIBRARIES})
 endif(PORTAUDIO_FOUND)
 
 if(OPROFILE_FOUND)

@@ -2,37 +2,44 @@
 // Licensed under GPLv2+
 // Refer to the license.txt file included.
 
-#include "Common/CommonTypes.h"
-#include "Core/PowerPC/JitInterface.h"
 #include "Core/PowerPC/JitArm64/Jit.h"
+#include "Common/CommonTypes.h"
 #include "Core/PowerPC/JitArm64/JitArm64Cache.h"
+#include "Core/PowerPC/JitInterface.h"
 
-void JitArm64BlockCache::WriteLinkBlock(u8* location, const u8* address)
+void JitArm64BlockCache::WriteLinkBlock(const JitBlock::LinkData& source, const JitBlock* dest)
 {
-	ARM64XEmitter emit(location);
-	s64 offset = address - location;
+  u8* location = source.exitPtrs;
+  ARM64XEmitter emit(location);
 
-	// different size of the dispatcher call, so they are still continuous
-	if (offset > 0 && offset <= 28 && offset % 4 == 0)
-	{
-		for (int i = 0; i < offset / 4; i++)
-			emit.HINT(HINT_NOP);
-	}
-	else
-	{
-		emit.B(address);
-	}
-	emit.FlushIcache();
+  if (dest)
+  {
+    // Are we able to jump directly to the normal entry?
+    s64 distance = ((s64)dest->normalEntry - (s64)location) >> 2;
+    if (distance >= -0x40000 && distance <= 0x3FFFF)
+    {
+      emit.B(CC_PL, dest->normalEntry);
+    }
+
+    // Use the checked entry if either downcount is smaller zero,
+    // or if we're not able to inline the downcount check here.
+    emit.B(dest->checkedEntry);
+  }
+  else
+  {
+    emit.MOVI2R(DISPATCHER_PC, source.exitAddress);
+    emit.B(jit->GetAsmRoutines()->dispatcher);
+  }
+  emit.FlushIcache();
 }
 
-void JitArm64BlockCache::WriteDestroyBlock(const u8* location, u32 address)
+void JitArm64BlockCache::WriteDestroyBlock(const JitBlock& block)
 {
-	// must fit within the code generated in JitArm64::WriteExit
-	ARM64XEmitter emit((u8 *)location);
-	emit.MOVI2R(W0, address);
-	emit.MOVI2R(X30, (u64)jit->GetAsmRoutines()->dispatcher);
-	emit.STR(INDEX_UNSIGNED, W0, X29, PPCSTATE_OFF(pc));
-	emit.BR(X30);
-	emit.FlushIcache();
-}
+  // Only clear the entry points as we might still be within this block.
+  ARM64XEmitter emit((u8*)block.checkedEntry);
 
+  while (emit.GetWritableCodePtr() <= block.normalEntry)
+    emit.BRK(0x123);
+
+  emit.FlushIcache();
+}

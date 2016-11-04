@@ -1,7 +1,8 @@
 set(GUI_SRCS
-	ARCodeAddEdit.cpp
 	AboutDolphin.cpp
 	ControllerConfigDiag.cpp
+	Cheats/ActionReplayCodesPanel.cpp
+	Cheats/ARCodeAddEdit.cpp
 	Cheats/CheatSearchTab.cpp
 	Cheats/CheatsWindow.cpp
 	Cheats/CreateCodeDialog.cpp
@@ -34,9 +35,12 @@ set(GUI_SRCS
 	Debugger/WatchView.cpp
 	Debugger/WatchWindow.cpp
 	NetPlay/ChangeGameDialog.cpp
+	NetPlay/MD5Dialog.cpp
+	NetPlay/NetPlayLauncher.cpp
 	NetPlay/NetPlaySetupFrame.cpp
 	NetPlay/NetWindow.cpp
 	NetPlay/PadMapDialog.cpp
+	DolphinSlider.cpp
 	FifoPlayerDlg.cpp
 	Frame.cpp
 	FrameAui.cpp
@@ -49,6 +53,8 @@ set(GUI_SRCS
 	LogConfigWindow.cpp
 	LogWindow.cpp
 	Main.cpp
+	MainMenuBar.cpp
+	MainToolBar.cpp
 	MemcardManager.cpp
 	PatchAddEdit.cpp
 	PostProcessingConfigDiag.cpp
@@ -67,7 +73,7 @@ endif()
 
 set(WXLIBS ${wxWidgets_LIBRARIES})
 
-if(NOT CMAKE_SYSTEM_NAME MATCHES FreeBSD)
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 	set(WXLIBS ${WXLIBS} dl)
 endif()
 
@@ -127,7 +133,13 @@ if(wxWidgets_FOUND)
 				message(\"(Note: This is only necessary to produce a redistributable binary.\")
 				message(\"To skip, pass -DSKIP_POSTPROCESS_BUNDLE=1 to cmake.)\")
 				set(BU_CHMOD_BUNDLE_ITEMS ON)
-				execute_process(COMMAND ${CMAKE_SOURCE_DIR}/Tools/deploy-mac.py \"${BUNDLE_PATH}\")
+				execute_process(
+					COMMAND ${CMAKE_SOURCE_DIR}/Tools/deploy-mac.py \"${BUNDLE_PATH}\"
+					RESULT_VARIABLE retcode
+				)
+				if(NOT \${retcode} EQUAL 0)
+					message(FATAL_ERROR \"Error when postprocessing bundle (return code: \${retcode}).\")
+				endif()
 				file(INSTALL \"${CMAKE_SOURCE_DIR}/Data/Sys\"
 					DESTINATION \"${BUNDLE_PATH}/Contents/Resources\"
 					)
@@ -194,7 +206,7 @@ if(wxWidgets_FOUND)
 	set(CPACK_PACKAGE_EXECUTABLES ${CPACK_PACKAGE_EXECUTABLES} ${DOLPHIN_EXE})
 endif()
 
-if(USE_X11)
+if(USE_X11 OR ENABLE_HEADLESS)
 	set(DOLPHIN_NOGUI_EXE ${DOLPHIN_EXE_BASE}-nogui)
 	add_executable(${DOLPHIN_NOGUI_EXE} ${SRCS} ${NOGUI_SRCS})
 	target_link_libraries(${DOLPHIN_NOGUI_EXE} ${LIBS})
